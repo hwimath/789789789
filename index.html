@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>휘매쓰 연산 챌린지!</title>
+<style>
+    body {
+        margin: 0; 
+        padding: 0; 
+        font-family: 'Arial', sans-serif; 
+        background: #f0f0f0; 
+        color: #333; 
+        display: flex; 
+        flex-direction: column; 
+        align-items: center;
+    }
+
+    h1 {
+        text-align: center; 
+        margin-top: 20px;
+        font-size: 36px;
+        font-weight: bold;
+    }
+
+    .container {
+        width: 90%; 
+        max-width: 600px; 
+        margin: 20px auto; 
+        padding: 20px; 
+        background: #fff; 
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    .stats {
+        display: flex; 
+        justify-content: space-between; 
+        align-items: center; 
+        margin-bottom: 10px;
+        font-size: 18px;
+    }
+
+    .timer-bar {
+        width: 100%; 
+        background: #ddd; 
+        height: 20px; 
+        border-radius: 10px; 
+        overflow: hidden; 
+        margin-bottom: 10px;
+    }
+
+    .timer-bar-fill {
+        width: 100%; 
+        height: 100%; 
+        background: #76c7c0; 
+        transition: width 0.2s linear;
+    }
+
+    .problem-container {
+        text-align: center; 
+        font-size: 24px; 
+        margin-bottom: 20px;
+    }
+
+    .vertical-calc {
+        display: inline-block; 
+        font-family: 'Courier New', monospace; 
+        line-height: 1.5;
+        font-size: 32px;
+        margin-top: 10px;
+        white-space: pre;
+        text-align: right;
+    }
+
+    .vertical-calc .line {
+        border-bottom: 3px solid #333; 
+        margin: 5px 0;
+    }
+
+    .answer-input {
+        width: 80%; 
+        font-size: 20px; 
+        text-align: center; 
+        padding: 10px; 
+        margin-bottom: 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+    }
+
+    .submit-btn {
+        background: #ff7c42;
+        color: #fff;
+        font-size: 20px;
+        border: none;
+        border-radius: 5px;
+        padding: 10px 20px;
+        cursor: pointer;
+    }
+
+    .submit-btn:hover {
+        background: #ee5c1f;
+    }
+
+    .chance, .score, .global-time {
+        font-size: 16px;
+    }
+
+    .popup {
+        position: fixed; 
+        top: 0; 
+        left:0; 
+        width:100%; 
+        height:100%; 
+        background: rgba(0,0,0,0.5); 
+        display:none; 
+        justify-content:center; 
+        align-items:center;
+        z-index: 9999;
+    }
+
+    .popup-content {
+        background:#fff; 
+        padding:20px; 
+        border-radius:10px; 
+        max-width:300px; 
+        text-align:center;
+    }
+
+    .popup-content button {
+        padding:5px 10px; 
+        border:none; 
+        background:#ddd; 
+        border-radius:5px; 
+        cursor:pointer;
+    }
+
+    .popup-content button:hover {
+        background:#ccc;
+    }
+
+    .result-screen {
+        display: none;
+        text-align: center;
+    }
+
+    .reward-popup {
+        position: fixed; 
+        top:50%; 
+        left:50%; 
+        transform: translate(-50%, -50%); 
+        background:#fff; 
+        padding:20px; 
+        border-radius:10px; 
+        box-shadow:0 0 10px rgba(0,0,0,0.5); 
+        display:none; 
+        z-index:99999; 
+        text-align:center;
+    }
+
+    .reward-popup p {
+        margin:10px 0;
+    }
+
+    .reward-popup button {
+        padding:5px 10px;
+        border:none;
+        background:#ddd;
+        border-radius:5px;
+        cursor:pointer;
+    }
+
+    .reward-popup button:hover {
+        background:#ccc;
+    }
+
+    .difficulty-selection {
+        text-align: center;
+    }
+
+    .difficulty-selection button {
+        margin: 10px;
+        font-size: 20px;
+        padding: 10px 20px;
+    }
+
+    .game-screen {
+        display: none;
+    }
+
+    .result-screen {
+        display: none;
+    }
+
+</style>
+</head>
+<body>
+    <h1>휘매쓰 연산 챌린지!</h1>
+    <div class="container">
+        <div class="difficulty-selection">
+            <h2>난이도를 선택하세요</h2>
+            <button data-difficulty="최상">최상(20초)</button>
+            <button data-difficulty="상">상(30초)</button>
+            <button data-difficulty="중">중(40초)</button>
+            <button data-difficulty="하">하(무제한)</button>
+        </div>
+
+        <div class="game-screen">
+            <div class="stats">
+                <div class="global-time">총 소요 시간: 0초</div>
+                <div class="chance">남은 기회: 3</div>
+                <div class="score">점수: 0</div>
+            </div>
+            <div class="timer-bar">
+                <div class="timer-bar-fill" style="width:100%; background:green;"></div>
+            </div>
+            <div class="problem-container">
+                <!-- 세로셈 문제 표시 -->
+                <div class="vertical-calc" id="problem-display"></div>
+            </div>
+            <input type="text" class="answer-input" id="answer-input" placeholder="정답을 입력하세요" />
+            <button class="submit-btn" id="submit-answer">제출</button>
+        </div>
+
+        <div class="result-screen">
+            <h2>게임 종료</h2>
+            <p>최종 점수: <span id="final-score">0</span></p>
+            <button id="retry-btn">다시하기</button>
+        </div>
+    </div>
+
+    <div class="popup" id="solution-popup">
+        <div class="popup-content">
+            <h3>오답!</h3>
+            <p id="solution-text"></p>
+            <button id="close-solution">닫기</button>
+        </div>
+    </div>
+
+    <div class="reward-popup" id="reward-popup">
+        <p id="reward-message"></p>
+        <button id="reward-close">닫기</button>
+    </div>
+
+    <script>
+    // 문제 100개 직접 제시
+    // 패턴:
+    // i:0~99
+    // a = 999 - i
+    // b = 200 + i
+    // c = 50 + (i % 10)
+    // answer = a - b - c > 0 (검증 완료)
+    const problems = [];
+    for(let i=0;i<100;i++){
+        let a = 999 - i;
+        let b = 200 + i;
+        let c = 50 + (i % 10);
+        let ans = a - b - c;
+        // ans 양수 확인
+        // console.log(a,b,c,ans); // 개발 확인용
+        problems.push({a:a,b:b,c:c,answer:ans});
+    }
+
+    let currentDifficulty = null;
+    let timeLimitPerProblem = 0; 
+    let remainingChances = 3;
+    let score = 0;
+    let globalTime = 0;
+    let currentProblemIndex = 0;
+    let currentProblem = null;
+    let timerInterval = null;
+    let globalTimerInterval = null;
+    let timeLeft = 0; 
+    let gameOver = false;
+
+    const difficultySelection = document.querySelector('.difficulty-selection');
+    const gameScreen = document.querySelector('.game-screen');
+    const resultScreen = document.querySelector('.result-screen');
+    const finalScoreSpan = document.getElementById('final-score');
+    const chanceDisplay = document.querySelector('.chance');
+    const scoreDisplay = document.querySelector('.score');
+    const globalTimeDisplay = document.querySelector('.global-time');
+    const problemDisplay = document.getElementById('problem-display');
+    const timerBarFill = document.querySelector('.timer-bar-fill');
+    const submitAnswerBtn = document.getElementById('submit-answer');
+    const solutionPopup = document.getElementById('solution-popup');
+    const solutionText = document.getElementById('solution-text');
+    const closeSolutionBtn = document.getElementById('close-solution');
+    const rewardPopup = document.getElementById('reward-popup');
+    const rewardMessage = document.getElementById('reward-message');
+    const rewardCloseBtn = document.getElementById('reward-close');
+    const retryBtn = document.getElementById('retry-btn');
+    const answerInput = document.getElementById('answer-input');
+
+    document.querySelectorAll('.difficulty-selection button').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+            currentDifficulty = btn.getAttribute('data-difficulty');
+            if(currentDifficulty === '최상') timeLimitPerProblem = 20;
+            else if(currentDifficulty === '상') timeLimitPerProblem = 30;
+            else if(currentDifficulty === '중') timeLimitPerProblem = 40;
+            else timeLimitPerProblem = 0; 
+            startGame();
+        });
+    });
+
+    function startGame(){
+        difficultySelection.style.display = 'none';
+        gameScreen.style.display = 'block';
+        remainingChances = 3;
+        score = 0;
+        globalTime = 0;
+        gameOver = false;
+        currentProblemIndex = 0;
+        chanceDisplay.textContent = "남은 기회: " + remainingChances;
+        scoreDisplay.textContent = "점수: " + score;
+        globalTimeDisplay.textContent = "총 소요 시간: " + globalTime+"초";
+        clearInterval(globalTimerInterval);
+        globalTimerInterval = setInterval(()=>{
+            globalTime++;
+            globalTimeDisplay.textContent = "총 소요 시간: " + globalTime+"초";
+        },1000);
+
+        loadProblem();
+    }
+
+    function loadProblem(){
+        if(gameOver) return;
+        if(currentProblemIndex >= problems.length) {
+            // 문제 모두 소비 후 계속 무한 반복 랜덤
+            currentProblem = problems[Math.floor(Math.random()*problems.length)];
+        } else {
+            currentProblem = problems[currentProblemIndex];
+        }
+
+        displayProblem(currentProblem);
+        if(timeLimitPerProblem > 0) {
+            timeLeft = timeLimitPerProblem;
+            updateTimerBar();
+            clearInterval(timerInterval);
+            timerInterval = setInterval(()=>{
+                timeLeft -= 0.2;
+                if(timeLeft <= 0){
+                    clearInterval(timerInterval);
+                    onTimeUp();
+                }
+                updateTimerBar();
+            },200);
+        } else {
+            timerBarFill.style.width = '100%';
+            timerBarFill.style.background = 'green';
+        }
+
+        checkRandomReward();
+    }
+
+    function displayProblem(p){
+        // 세 수의 뺄셈: a - b - c
+        // 세로셈 형태:
+        //   a
+        // - b
+        // - c
+        // ----
+        //    ?
+
+        let maxLen = Math.max(p.a.toString().length, p.b.toString().length, p.c.toString().length);
+        let aStr = p.a.toString().padStart(maxLen,' ');
+        let bStr = p.b.toString().padStart(maxLen,' ');
+        let cStr = p.c.toString().padStart(maxLen,' ');
+
+        let html = `${aStr}\n-${bStr}\n-${cStr}\n`;
+        html += `<div class="line"></div>`;
+        html += `   ?`;
+
+        problemDisplay.innerHTML = "<pre>"+html+"</pre>";
+        answerInput.value = '';
+        answerInput.focus();
+    }
+
+    submitAnswerBtn.addEventListener('click', checkAnswer);
+    answerInput.addEventListener('keyup', (e)=>{
+        if(e.key === 'Enter') checkAnswer();
+    });
+
+    function checkAnswer(){
+        if(gameOver) return;
+        let userAnswer = parseInt(answerInput.value.trim(),10);
+        if(isNaN(userAnswer)) return;
+        if(userAnswer === currentProblem.answer){
+            addScore();
+            nextProblem();
+        } else {
+            wrongAnswer();
+        }
+    }
+
+    function addScore(){
+        let points = 0;
+        if(currentDifficulty==='최상') points=20;
+        else if(currentDifficulty==='상') points=15;
+        else if(currentDifficulty==='중') points=13;
+        else points=10;
+        score += points;
+        scoreDisplay.textContent = "점수: " + score;
+    }
+
+    function nextProblem(){
+        currentProblemIndex++;
+        if(!gameOver) {
+            loadProblem();
+        }
+    }
+
+    function wrongAnswer(){
+        showSolutionPopup();
+        remainingChances--;
+        if(remainingChances<=0){
+            endGame();
+        } else {
+            chanceDisplay.textContent = "남은 기회: " + remainingChances;
+            nextProblem();
+        }
+    }
+
+    function showSolutionPopup(){
+        solutionText.textContent = "정답: " + currentProblem.answer;
+        solutionPopup.style.display = 'flex';
+    }
+
+    closeSolutionBtn.addEventListener('click', ()=>{
+        solutionPopup.style.display = 'none';
+        answerInput.focus();
+    });
+
+    function onTimeUp(){
+        if(gameOver) return;
+        remainingChances--;
+        if(remainingChances<=0){
+            endGame();
+        } else {
+            chanceDisplay.textContent = "남은 기회: " + remainingChances;
+            nextProblem();
+        }
+    }
+
+    function updateTimerBar(){
+        if(timeLimitPerProblem>0){
+            let percentage = (timeLeft/timeLimitPerProblem)*100;
+            if(percentage<0) percentage=0;
+            timerBarFill.style.width = percentage+"%";
+            if(percentage <= 20) timerBarFill.style.background = 'red';
+            else if(percentage <=50) timerBarFill.style.background = 'orange';
+            else timerBarFill.style.background = 'green';
+        } else {
+            timerBarFill.style.width = '100%'; 
+            timerBarFill.style.background = 'green';
+        }
+    }
+
+    function endGame(){
+        gameOver = true;
+        clearInterval(timerInterval);
+        clearInterval(globalTimerInterval);
+        document.querySelector('.game-screen').style.display = 'none';
+        resultScreen.style.display = 'block';
+        finalScoreSpan.textContent = score;
+    }
+
+    retryBtn.addEventListener('click', ()=>{
+        resultScreen.style.display = 'none';
+        difficultySelection.style.display = 'block';
+    });
+
+    function checkRandomReward(){
+        let r = Math.random();
+        if(r < 0.0001){
+            showRewardPopup("축하합니다! 5000원 상품권 당첨!");
+        } else if(r < 0.001){
+            showRewardPopup("축하합니다! 3000원 상품권 당첨!");
+        } else if(r < 0.003){
+            showRewardPopup("축하합니다! 1회 면제권 당첨! (자동 사용)");
+            remainingChances++;
+            chanceDisplay.textContent = "남은 기회: " + remainingChances;
+        }
+    }
+
+    function showRewardPopup(msg){
+        rewardMessage.textContent = msg;
+        rewardPopup.style.display = 'block';
+    }
+
+    rewardCloseBtn.addEventListener('click', ()=>{
+        rewardPopup.style.display='none';
+        answerInput.focus();
+    });
+    </script>
+</body>
+</html>
